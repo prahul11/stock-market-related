@@ -1,0 +1,11 @@
+# 1. Avoid a specific folder (and all its contents)
+xp/
+
+# 2. Avoid specific files by name
+.env
+# 3. Avoid files by extension (e.g., all log files)
+faaa.mp3
+
+# 4. Avoid a folder but keep one specific file inside it
+# (The '!' means "do not ignore")
+venv/

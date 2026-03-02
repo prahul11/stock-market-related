@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kite Market Timeline</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #18191a; color: #e4e6eb; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .header { width: 100%; max-width: 500px; padding: 15px; background: #242526; border-radius: 8px; margin-bottom: 20px; border: 1px solid #3e4042; text-align: center; }
+        #timeline { width: 100%; max-width: 500px; display: flex; flex-direction: column-reverse; } /* Newest on top */
+        .feed-item { background: #242526; padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 1px solid #3e4042; animation: slideDown 0.4s ease-out; }
+        .feed-item.alert { border-left: 5px solid #f02849; background: #322124; }
+        .time { font-size: 0.75rem; color: #b0b3b8; }
+        .ltp-val { font-size: 1.2rem; font-weight: bold; color: #45bd62; margin-top: 5px; }
+        .msg { font-size: 1rem; margin-top: 5px; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .target-tag { background: #4b4d4e; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>📊 Kite Live Timeline</h2>
+        <div id="config-status">Loading config...</div>
+    </div>
+
+    <div id="timeline">
+        </div>
+
+    <script>
+        let lastTime = "";
+
+        async function fetchUpdate() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                
+                // Sirf tab add karein agar naya timestamp ho
+                if (data.last_update !== lastTime) {
+                    lastTime = data.last_update;
+                    addTimelineItem(data);
+                }
+                
+                document.getElementById('config-status').innerHTML = 
+                    `Target: <b>${data.target_price}</b> | Range: <b>±${data.range}</b>`;
+            } catch (e) { console.log("Error fetching data"); }
+        }
+
+        function addTimelineItem(data) {
+            const timeline = document.getElementById('timeline');
+            const item = document.createElement('div');
+            item.className = 'feed-item' + (data.alert_active ? ' alert' : '');
+            
+            const alertMsg = data.alert_active ? 
+                `<div style="color: #f02849; font-weight: bold;">🚨 TARGET REACHED!</div>` : 
+                `<div>Market Update</div>`;
+
+            item.innerHTML = `
+                <div class="time">${data.last_update}</div>
+                ${alertMsg}
+                <div class="ltp-val">₹ ${data.current_ltp.toFixed(2)}</div>
+                <div class="msg">LTP updated for token ${data.instrument_token}</div>
+            `;
+
+            timeline.appendChild(item);
+
+            // Limit items to 50 so page doesn't lag
+            if (timeline.children.length > 50) {
+                timeline.removeChild(timeline.firstChild);
+            }
+        }
+
+        setInterval(fetchUpdate, 30000); // Check every 5 sec
+    </script>
+</body>
+</html>
